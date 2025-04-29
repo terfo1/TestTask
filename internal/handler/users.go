@@ -128,6 +128,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	logger.Logger.Println("User created successfully!")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
 }
 
 // DeleteUser godoc
@@ -168,6 +169,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	logger.Logger.Println("User deleted successfully!")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "User deleted"})
 }
 
 // UpdateUser godoc
@@ -225,4 +227,5 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	logger.Logger.Println("User updated successfully!")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }
