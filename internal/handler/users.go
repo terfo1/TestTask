@@ -3,6 +3,7 @@ package handler
 import (
 	"TestTask/internal/database"
 	"TestTask/internal/models"
+	"TestTask/pkg/enrich"
 	"TestTask/pkg/logger"
 	"encoding/json"
 	"net/http"
@@ -66,6 +67,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+
 	var body struct {
 		Name    string
 		Surname string
@@ -76,7 +78,21 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := models.User{Name: body.Name, Surname: body.Surname}
+	enriched, err := enrich.EnrichData(body.Name)
+	if err != nil {
+		logger.Logger.Println("Enrichment failed:", err)
+		http.Error(w, "Enrichment failed", http.StatusInternalServerError)
+		return
+	}
+
+	user := models.User{
+		Name:        body.Name,
+		Surname:     body.Surname,
+		Age:         enriched.Age,
+		Gender:      enriched.Gender,
+		Nationality: enriched.Nationality,
+	}
+
 	res := database.DB.Create(&user)
 	if res.Error != nil {
 		logger.Logger.Println("Could not create user!")
