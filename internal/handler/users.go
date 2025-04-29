@@ -10,6 +10,21 @@ import (
 	"strconv"
 )
 
+// GetUsers godoc
+// @Summary      Получение пользователей
+// @Description  Получить список пользователей с фильтрами и пагинацией
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        page        query   int     false  "Номер страницы"
+// @Param        limit       query   int     false  "Количество на странице"
+// @Param        age_min     query   int     false  "Мин. возраст"
+// @Param        age_max     query   int     false  "Макс. возраст"
+// @Param        gender      query   string  false  "Пол"
+// @Param        nationality query   string  false  "Национальность"
+// @Success      200  {array}  models.User
+// @Failure      400  {string}  string "Invalid request"
+// @Router       /user [get]
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		logger.Logger.Println("Invalid request")
@@ -61,6 +76,17 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
+// CreateUser godoc
+// @Summary      Создание пользователя
+// @Description  Добавить нового пользователя и обогатить его данными
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body  models.User  true  "User Data"
+// @Success      201  {object}  models.User
+// @Failure      400  {string}  string "Bad request"
+// @Failure      500  {string}  string "Internal Server Error"
+// @Router       /createuser [post]
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		logger.Logger.Println("Invalid request")
@@ -104,6 +130,17 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// DeleteUser godoc
+// @Summary      Удаление пользователя
+// @Description  Удалить пользователя по ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id  query  int  true  "ID пользователя"
+// @Success      200  {string}  string "User deleted"
+// @Failure      400  {string}  string "Bad request"
+// @Failure      404  {string}  string "User not found"
+// @Router       /deleteuser [delete]
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		logger.Logger.Println("Invalid request")
@@ -120,7 +157,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	res := database.DB.Delete(&models.User{}, id)
 	if res.Error != nil {
 		logger.Logger.Printf("Could not delete user with id %d!", id)
-		http.Error(w, "Could not delete user", http.StatusInternalServerError)
+		http.Error(w, "Could not delete user", http.StatusNotFound)
 		return
 	}
 	if res.RowsAffected == 0 {
@@ -133,6 +170,18 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// UpdateUser godoc
+// @Summary      Обновление пользователя
+// @Description  Обновить пользователя по ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id    query  int         true  "user id"
+// @Param        user  body   models.User true  "updated data"
+// @Success      200  {object}  models.User
+// @Failure      400  {string}  string "Bad request"
+// @Failure      500  {string}  string "Internal Server Error"
+// @Router       /updateuser [put]
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		logger.Logger.Println("Invalid request")

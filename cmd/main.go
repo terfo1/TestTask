@@ -9,6 +9,12 @@ import (
 	"net/http"
 )
 
+// @title 			Test Task
+// @version         1.0
+// @description     This is an API for enriching user info with age, gender, and nationality.
+// @host            localhost:8080
+// @BasePath        /
+
 func main() {
 	logger.InitLog()
 	config.LoadEnv()
