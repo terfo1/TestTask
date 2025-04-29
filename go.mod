@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/go-chi/chi v1.5.5 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect

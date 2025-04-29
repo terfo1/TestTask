@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "TestTask/docs"
 	"TestTask/internal/config"
 	"TestTask/internal/database"
 	"TestTask/internal/routes"
