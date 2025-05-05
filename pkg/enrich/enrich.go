@@ -1,10 +1,13 @@
 package enrich
 
 import (
+	"TestTask/internal/config"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
+
+var cfg *config.Config = config.LoadYaml("config.yaml")
 
 type Enriched struct {
 	Age         int
@@ -28,13 +31,13 @@ func EnrichData(name string) (*Enriched, error) {
 		natData    natResp
 	)
 
-	if err := fetchJSON(fmt.Sprintf("https://api.agify.io/?name=%s", name), &ageData); err != nil {
+	if err := fetchJSON(fmt.Sprintf(cfg.URL.Age, name), &ageData); err != nil {
 		return nil, err
 	}
-	if err := fetchJSON(fmt.Sprintf("https://api.genderize.io/?name=%s", name), &genderData); err != nil {
+	if err := fetchJSON(fmt.Sprintf(cfg.URL.Gender, name), &genderData); err != nil {
 		return nil, err
 	}
-	if err := fetchJSON(fmt.Sprintf("https://api.nationalize.io/?name=%s", name), &natData); err != nil {
+	if err := fetchJSON(fmt.Sprintf(cfg.URL.Nationality, name), &natData); err != nil {
 		return nil, err
 	}
 

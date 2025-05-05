@@ -1,0 +1,4 @@
+url:
+  age: https://api.agify.io/?name=%s
+  gender: https://api.genderize.io/?name=%s
+  nationality: https://api.nationalize.io/?name=%s

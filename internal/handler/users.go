@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"TestTask/internal/database"
 	"TestTask/internal/models"
+	"TestTask/internal/repository"
 	"TestTask/pkg/enrich"
 	"TestTask/pkg/logger"
 	"encoding/json"
@@ -27,48 +27,39 @@ import (
 // @Router       /user [get]
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		logger.Logger.Println("Invalid request")
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		logger.Logger.Println("Invalid request method")
+		http.Error(w, "Invalid request method", http.StatusBadRequest)
 		return
 	}
+
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	if page == 0 {
 		page = 1
 	}
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit == 0 {
-		limit = 1
-	}
-	age_min := r.URL.Query().Get("age_min")
-	age_max := r.URL.Query().Get("age_max")
-	gender := r.URL.Query().Get("gender")
-	nationality := r.URL.Query().Get("nationality")
-
-	offset := (page - 1) * limit
-	query := database.DB.Model(&models.User{})
-
-	// Filtering
-	if gender != "" {
-		query = query.Where("gender = ?", gender)
-	}
-	if nationality != "" {
-		query = query.Where("nationality = ?", nationality)
-	}
-	if age_min != "" {
-		ageMin, _ := strconv.Atoi(age_min)
-		query = query.Where("age >= ?", ageMin)
-	}
-	if age_max != "" {
-		ageMax, _ := strconv.Atoi(age_max)
-		query = query.Where("age <= ?", ageMax)
+		limit = 10
 	}
 
-	// Pagination
-	var users []models.User
-	res := query.Limit(limit).Offset(offset).Find(&users)
-	if res.Error != nil {
-		logger.Logger.Println("Pagination failed")
-		http.Error(w, "Pagination failed", http.StatusInternalServerError)
+	filters := repository.UserFilter{
+		Gender:      r.URL.Query().Get("gender"),
+		Nationality: r.URL.Query().Get("nationality"),
+	}
+	if ageMin := r.URL.Query().Get("age_min"); ageMin != "" {
+		if val, err := strconv.Atoi(ageMin); err == nil {
+			filters.AgeMin = &val
+		}
+	}
+	if ageMax := r.URL.Query().Get("age_max"); ageMax != "" {
+		if val, err := strconv.Atoi(ageMax); err == nil {
+			filters.AgeMax = &val
+		}
+	}
+
+	users, err := repository.GetByParams(filters, page, limit)
+	if err != nil {
+		logger.Logger.Printf("Error retrieving users: %v", err)
+		http.Error(w, "Failed to retrieve users", http.StatusInternalServerError)
 		return
 	}
 
@@ -103,6 +94,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not parse request body!", http.StatusBadRequest)
 		return
 	}
+	if body.Name == "" || body.Surname == "" {
+		logger.Logger.Println("Name and surname are required!")
+		http.Error(w, "Name and surname are required", http.StatusBadRequest)
+		return
+	}
 
 	enriched, err := enrich.EnrichData(body.Name)
 	if err != nil {
@@ -119,7 +115,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		Nationality: enriched.Nationality,
 	}
 
-	res := database.DB.Create(&user)
+	res := repository.CreateInDb(&user)
 	if res.Error != nil {
 		logger.Logger.Println("Could not create user!")
 		http.Error(w, "Could not create user", http.StatusInternalServerError)
@@ -155,7 +151,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing id parameter", http.StatusBadRequest)
 	}
 
-	res := database.DB.Delete(&models.User{}, id)
+	res := repository.DeleteInDb(&models.User{}, id)
 	if res.Error != nil {
 		logger.Logger.Printf("Could not delete user with id %d!", id)
 		http.Error(w, "Could not delete user", http.StatusNotFound)
@@ -203,12 +199,17 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not parse request body!", http.StatusBadRequest)
 		return
 	}
-
+	if body.Name == "" || body.Surname == "" {
+		logger.Logger.Println("Name and surname are required!")
+		http.Error(w, "Name and surname are required", http.StatusBadRequest)
+		return
+	}
+	
 	var user models.User
-	res := database.DB.First(&user, id)
+	res := repository.GetById(&user, id)
 	if res.Error != nil {
 		logger.Logger.Printf("Could not find user with id %d", id)
-		http.Error(w, "Could not find user with id", http.StatusBadRequest)
+		http.Error(w, "Could not find user with id", http.StatusNotFound)
 		return
 	}
 
@@ -218,7 +219,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	user.Gender = body.Gender
 	user.Nationality = body.Nationality
 
-	save := database.DB.Save(&user)
+	save := repository.SaveInDb(&user)
 	if save.Error != nil {
 		logger.Logger.Printf("Could not update user with id %d", id)
 		http.Error(w, "Could not update user", http.StatusInternalServerError)

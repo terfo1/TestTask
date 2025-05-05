@@ -12,9 +12,9 @@ func SetupRoutes() http.Handler {
 	mux.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	))
-	mux.HandleFunc("/createuser", handler.CreateUser)
-	mux.HandleFunc("/user", handler.GetUsers)
-	mux.HandleFunc("/updateuser", handler.UpdateUser)
-	mux.HandleFunc("/deleteuser", handler.DeleteUser)
+	mux.Post("/user", handler.CreateUser)
+	mux.Get("/user", handler.GetUsers)
+	mux.Put("/user", handler.UpdateUser)
+	mux.Delete("/user", handler.DeleteUser)
 	return mux
 }
